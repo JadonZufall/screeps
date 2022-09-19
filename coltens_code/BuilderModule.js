@@ -11,6 +11,33 @@ const utils = require("utils");
 
 module.exports = {
     run: function(targetCreep) {
+        var thisRoom = Game.rooms[targetCreep.memory["homeRoom"]];
+        
+        var thisRoomsTowers = thisRoom.find(FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}});
+        var closestTower = targetCreep.pos.findClosestByPath(thisRoomsTowers);
+        
+        if(targetCreep.hits < targetCreep.hitsMax) {
+            targetCreep.moveTo(closestTower);
+            return 0;
+        }
+        
+        if (targetCreep.ticksToLive < 300) {
+            targetCreep.memory["imDying"] = true;
+        }
+        if (targetCreep.ticksToLive > 1400) {
+            targetCreep.memory["imDying"] = false;
+        }
+        
+        var thisRoomsSpawns = thisRoom.find(FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_SPAWN}});
+        var closestSpawn = targetCreep.pos.findClosestByPath(thisRoomsSpawns);
+        
+        if (targetCreep.memory["imDying"] == true && closestSpawn.store.getFreeCapacity(RESOURCE_ENERGY) < closestSpawn.store.getCapacity(RESOURCE_ENERGY)/2) {
+            var renewResult = thisRoomsSpawns[0].renewCreep(targetCreep);
+            if (renewResult == ERR_NOT_IN_RANGE) {
+                targetCreep.moveTo(thisRoomsSpawns[0]);
+            }
+            return 0;
+        }
         if (targetCreep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
             targetCreep.memory["fullStore"] = false;
         }
