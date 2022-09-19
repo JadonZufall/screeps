@@ -18,6 +18,9 @@ module.exports = {
                 if ((sources[index].energy/sources[index].ticksToRegeneration) > (highestSource.energy/highestSource.ticksToRegeneration)) {
                     highestSource = sources[index];
                 }
+                else if (!sources[index].ticksToRegeneration ) {
+                    highestSource = sources[index];
+                }
             }
             targetCreep.memory["targetSource"] = highestSource.id;
         }
@@ -34,6 +37,9 @@ module.exports = {
             let highestSource = sources[0];
             for (let index in sources) {
                 if ((sources[index].energy/sources[index].ticksToRegeneration) > (highestSource.energy/highestSource.ticksToRegeneration)) {
+                    highestSource = sources[index];
+                }
+                else if (!sources[index].ticksToRegeneration ) {
                     highestSource = sources[index];
                 }
             }
