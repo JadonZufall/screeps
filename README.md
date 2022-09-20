@@ -1,2 +1,2 @@
 # screeps_code
-Code for the games screeps.
+Code for the game screeps.
