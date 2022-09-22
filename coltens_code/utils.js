@@ -12,9 +12,8 @@ module.exports = {
         return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5;
     },
     
-    withdrawEnergy: function(targetCreep, withdrawSpawn=false, withdrawExtension=false, withdrawLink=false, withdrawStorage=false, withdrawTower=false, withdrawTerminal=false, withdrawContainer=true, withdrawAny=false, requireEnergy=true, storeAny=false) {
+    withdrawEnergy: function(targetCreep, withdrawSpawn=false, withdrawExtension=false, withdrawLink=false, withdrawStorage=true, withdrawTower=false, withdrawTerminal=false, withdrawContainer=true, withdrawAny=false, requireEnergy=true, storeAny=false) {
         let roomTargets = [];
-        
         if (withdrawSpawn || storeAny) {
             let roomSpawn = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_SPAWN}});
             roomTargets = roomTargets.concat(roomSpawn);
@@ -49,7 +48,6 @@ module.exports = {
             let withdrawResult = targetCreep.withdraw(closestTarget, RESOURCE_ENERGY);
             if (transferResult == ERR_NOT_IN_RANGE) {
                 targetCreep.moveTo(closestTarget);
-                return true;
             }
             return true;
         }
@@ -67,7 +65,6 @@ module.exports = {
                 let transferResult = targetCreep.withdraw(closestTarget, RESOURCE_ENERGY);
                 if (transferResult == ERR_NOT_IN_RANGE) {
                     targetCreep.moveTo(closestTarget);
-                    return true;
                 }
                 return true;
             }
@@ -115,7 +112,6 @@ module.exports = {
             let transferResult = targetCreep.transfer(closestTarget, RESOURCE_ENERGY);
             if (transferResult == ERR_NOT_IN_RANGE) {
                 targetCreep.moveTo(closestTarget);
-                return true;
             }
             return true;
         }
@@ -134,7 +130,6 @@ module.exports = {
                 let transferResult = targetCreep.transfer(closestTarget, RESOURCE_ENERGY);
                 if (transferResult == ERR_NOT_IN_RANGE) {
                     targetCreep.moveTo(closestTarget);
-                    return true;
                 }
                 return true;
             }
@@ -155,5 +150,13 @@ module.exports = {
         }
         
         return damagedBuildings;
+    },
+    
+    toRoom: function(targetCreep) {
+        if (targetCreep.room.name != targetCreep.memory["homeRoom"]) {
+            let homeRoomPos = new RoomPosition(25, 25, targetCreep.memory["homeRoom"]);
+            targetCreep.moveTo(homeRoomPos);
+            return 1;
+        }
     }
 };
