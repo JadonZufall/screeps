@@ -1,11 +1,4 @@
-/*
- * Module code goes here. Use 'module.exports' to export things:
- * module.exports.thing = 'a thing';
- *
- * You can import it from another modules like this:
- * var mod = require('builder');
- * mod.thing == 'a thing'; // true
- */
+const util = require("util");
 
 module.exports = {
     run: function(targetCreep) {
@@ -51,10 +44,7 @@ module.exports = {
             }
         }
         else {
-            var transferResult = targetCreep.withdraw(Game.spawns["Spawn1"], RESOURCE_ENERGY);
-            if (transferResult == ERR_NOT_IN_RANGE) {
-                targetCreep.moveTo(Game.spawns["Spawn1"]);
-            }
+            util.withdrawEnergy(targetCreep, withdrawSpawn=true, withdrawContainer=true, withdrawAny=false);
         }
     }
 };

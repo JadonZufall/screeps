@@ -13,6 +13,35 @@ module.exports = {
         return result;
     },
     
+    findSourceSpaces: function(targetSource) {
+        var result = 0;
+        var targetRoom = targetSource.room;
+        var xPos = targetSource.pos.x;
+        var yPos = targetSource.pos.y;
+        for (var xIndex in [-1, 0, 1]) {
+            for (var yIndex in [-1, 0, 1]) {
+                var deltaX = [-1, 0, 1][xIndex];
+                var deltaY = [-1, 0, 1][yIndex];
+                if (deltaX == 0 && deltaY == 0) {
+                    continue;
+                }
+                else {
+                    var targetTile = targetRoom.lookAt(xPos + deltaX, yPos + deltaY);
+                    for (var index in targetTile) {
+                        var targetInfo = targetTile[index];
+                        if (targetInfo.type == "terrain") {
+                            if (!targetInfo.terrain == TERRAIN_MASK_WALL) {
+                                result++;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    },
+    
     findDamagedStructures: function(targetRoom) {
         var roomStructures = targetRoom.find(FIND_STRUCTURES);
         var damagedStructures = [];
@@ -45,31 +74,31 @@ module.exports = {
     withdrawEnergy: function(targetCreep, withdrawSpawn=false, withdrawExtension=false, withdrawLink=false, withdrawStorage=false, withdrawTower=false, withdrawTerminal=false, withdrawContainer=false, withdrawAny=true, requireEnergy=true) {
         let roomTargets = []
         
-        if (withdrawSpawn || storeAny) {
+        if (withdrawSpawn || withdrawAny) {
             let roomSpawn = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_SPAWN}});
             roomTargets = roomTargets.concat(roomSpawn);
         }
-        if (withdrawExtension || storeAny) {
+        if (withdrawExtension || withdrawAny) {
             let roomExtensions = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_EXTENSION}});
             roomTargets = roomTargets.concat(roomExtensions);
         }
-        if (withdrawLink || storeAny) {
+        if (withdrawLink || withdrawAny) {
             let roomLinks = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_LINK}});
             roomTargets = roomTargets.concat(roomLinks);
         }
-        if (withdrawStorage || storeAny) {
+        if (withdrawStorage || withdrawAny) {
             let roomStorages = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_STORAGE}});
             roomTargets = roomTargets.concat(roomStorages);
         }
-        if (withdrawTower || storeAny) {
+        if (withdrawTower || withdrawAny) {
             let roomTowers = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}});
             roomTargets = roomTargets.concat(roomTowers);
         }
-        if (withdrawTerminal || storeAny) {
+        if (withdrawTerminal || withdrawAny) {
             let roomTerminals = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_TERMINAL}});
             roomTargets = roomTargets.concat(roomTerminals);
         }
-        if (withdrawContainer || storeAny) {
+        if (withdrawContainer || withdrawAny) {
             let roomContainers = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_CONTAINER}});
             roomTargets = roomTargets.concat(roomContainers);
         }
@@ -120,12 +149,12 @@ module.exports = {
         }
         if (storeLink || storeAny) {
             let roomLinks = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_LINK}});
-            roomTargets = roomTargets.concat(roomLinks);
+            roomTarget6s = roomTargets.concat(roomLinks);
         }
-        if (storeStorage || storeAny) {
-            let roomStorages = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_STORAGE}});
-            roomTargets = roomTargets.concat(roomStorages);
-        }
+        //if (storeStorage || storeAny) {
+        //    let roomStorages = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_STORAGE}});
+        //    roomTargets = roomTargets.concat(roomStorages);
+        //}
         if (storeTower || storeAny) {
             let roomTowers = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}});
             roomTargets = roomTargets.concat(roomTowers);
