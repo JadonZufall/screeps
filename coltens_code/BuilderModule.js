@@ -12,37 +12,23 @@ const civilianUtils = require("civilianUtils");
 
 module.exports = {
     run: function(targetCreep) {
-        var thisRoom = targetCreep.room;
-        
         if (civilianUtils.hideUtil(targetCreep)) {
             return 0;
         }
         
-        if (targetCreep.ticksToLive < 300) {
-            targetCreep.memory["imDying"] = true;
-        }
-        if (targetCreep.ticksToLive > 1400) {
-            targetCreep.memory["imDying"] = false;
-        }
-        
-        var thisRoomsSpawns = thisRoom.find(FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_SPAWN}});
-        var closestSpawn = targetCreep.pos.findClosestByPath(thisRoomsSpawns);
-        
-        if (targetCreep.memory["imDying"] == true) {
-            var renewResult = thisRoomsSpawns[0].renewCreep(targetCreep);
-            if (renewResult == ERR_NOT_IN_RANGE) {
-                targetCreep.moveTo(thisRoomsSpawns[0]);
-            }
+        if (civilianUtils.workerRenewUtil(targetCreep)) {
             return 0;
         }
-        
+        if (utils.toRoom(targetCreep)) {
+            return 0;
+        }
         var upkeepResult = civilianUtils.controllerUpkeepUtil(targetCreep);
         
         if (upkeepResult == 1) {
             return 0;
         }
         else if (upkeepResult == 0) {
-            utils.withdrawEnergy(targetCreep);
+            utils.withdrawEnergy(targetCreep, withdrawSpawn=false, withdrawExtension=false, withdrawLink=false, withdrawStorage=true, withdrawTower=false, withdrawTerminal=true, withdrawContainer=true, withdrawAny=false, requireEnergy=true, storeAny=false);
             return 0;
         }
         

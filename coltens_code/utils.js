@@ -12,33 +12,47 @@ module.exports = {
         return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5;
     },
     
-    withdrawEnergy: function(targetCreep, withdrawSpawn=false, withdrawExtension=false, withdrawLink=false, withdrawStorage=true, withdrawTower=false, withdrawTerminal=false, withdrawContainer=true, withdrawAny=false, requireEnergy=true, storeAny=false) {
+    withdrawFromBuilding: function(targetCreep, buildingId, desiredResource = RESOURCE_ENERGY) {
+        let building = Game.getObjectById(buildingId);
+        if (building.store.getUsedCapacity(desiredResource) != 0) {
+            let transferResult = targetCreep.withdraw(building, desiredResource);
+            if (transferResult == ERR_NOT_IN_RANGE) {
+                targetCreep.moveTo(building);
+            }
+            return true;
+        }
+        else {
+            return false;
+        }
+    },
+    
+    withdrawEnergy: function(targetCreep, withdrawSpawn=false, withdrawExtension=false, withdrawLink=false, withdrawStorage=true, withdrawTower=false, withdrawTerminal=false, withdrawContainer=true, withdrawAny=false, requireEnergy=true) {
         let roomTargets = [];
-        if (withdrawSpawn || storeAny) {
+        if (withdrawSpawn || withdrawAny) {
             let roomSpawn = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_SPAWN}});
             roomTargets = roomTargets.concat(roomSpawn);
         }
-        if (withdrawExtension || storeAny) {
+        if (withdrawExtension || withdrawAny) {
             let roomExtensions = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_EXTENSION}});
             roomTargets = roomTargets.concat(roomExtensions);
         }
-        if (withdrawLink || storeAny) {
+        if (withdrawLink || withdrawAny) {
             let roomLinks = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_LINK}});
             roomTargets = roomTargets.concat(roomLinks);
         }
-        if (withdrawStorage || storeAny) {
+        if (withdrawStorage || withdrawAny) {
             let roomStorages = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_STORAGE}});
             roomTargets = roomTargets.concat(roomStorages);
         }
-        if (withdrawTower || storeAny) {
+        if (withdrawTower || withdrawAny) {
             let roomTowers = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_TOWER}});
             roomTargets = roomTargets.concat(roomTowers);
         }
-        if (withdrawTerminal || storeAny) {
+        if (withdrawTerminal || withdrawAny) {
             let roomTerminals = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_TERMINAL}});
             roomTargets = roomTargets.concat(roomTerminals);
         }
-        if (withdrawContainer || storeAny) {
+        if (withdrawContainer || withdrawAny) {
             let roomContainers = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_CONTAINER}});
             roomTargets = roomTargets.concat(roomContainers);
         }
@@ -74,9 +88,22 @@ module.exports = {
         }
     },
     
+    storeInBuilding: function(targetCreep, buildingId, desiredResource=RESOURCE_ENERGY) {
+        let building = Game.getObjectById(buildingId);
+        if (building.store.getFreeCapacity(desiredResource) != 0) {
+            let transferResult = targetCreep.transfer(building, desiredResource);
+            if (transferResult == ERR_NOT_IN_RANGE) {
+                targetCreep.moveTo(building);
+            }
+            return true;
+        }
+        else {
+            return false;
+        }
+    },
+    
     storeEnergy: function(targetCreep, storeAny=false, storeExtension=false, storeLink=false, storeStorage=false, storeTower=false, storeTerminal=false, storeContainer=false, storeSpawn=false, requireSpace=true) {
         let roomTargets = [];
-        
         if (storeSpawn || storeAny) {
             let roomSpawn = targetCreep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_SPAWN}});
             roomTargets = roomTargets.concat(roomSpawn);
@@ -140,7 +167,11 @@ module.exports = {
     },
     
     findDamagedBuildingsByRoomName: function(aRoom) {
-        var allBuildings = aRoom.find(FIND_STRUCTURES);
+        thisRoom = Game.rooms[aRoom];
+        if (!thisRoom) {
+            return {};
+        }
+        var allBuildings = thisRoom.find(FIND_STRUCTURES);
         var damagedBuildings = [];
         
         for (index in allBuildings) {
@@ -152,10 +183,10 @@ module.exports = {
         return damagedBuildings;
     },
     
-    toRoom: function(targetCreep) {
-        if (targetCreep.room.name != targetCreep.memory["homeRoom"]) {
-            let homeRoomPos = new RoomPosition(25, 25, targetCreep.memory["homeRoom"]);
-            targetCreep.moveTo(homeRoomPos);
+    toRoom: function(targetCreep, targetRoom = targetCreep.memory["homeRoom"]) {
+        if (targetCreep.room.name != targetRoom) {
+            let newRoomPos = new RoomPosition(25, 25, targetRoom);
+            targetCreep.moveTo(newRoomPos);
             return 1;
         }
     }

@@ -18,7 +18,7 @@ module.exports = {
             targetCreep.memory["emptyStore"] = false;
         }
         
-        if (Game.getObjectById(targetCreep.memory["targetSource"]) && Game.getObjectById(targetCreep.memory["targetSource"]).energy == 0) {
+        if (Game.getObjectById(targetCreep.memory["targetSource"]) && Game.getObjectById(targetCreep.memory["targetSource"]) != "none" && Game.getObjectById(targetCreep.memory["targetSource"]).energy == 0) {
             let sources = targetCreep.room.find(FIND_SOURCES);
             let highestSource = sources[0];
             for (let index in sources) {
@@ -83,7 +83,7 @@ module.exports = {
         return 0;
     },
     
-    buildUtil: function(targetCreep) {
+    repairUtil: function(targetCreep) {
         var thisRoom = targetCreep.room;
         var thisRoomName = thisRoom.name;
         
@@ -98,7 +98,6 @@ module.exports = {
             targetCreep.memory["fullStore"] = true;
         }
         if (targetCreep.memory["fullStore"]) {
-            var targets = thisRoom.find(FIND_CONSTRUCTION_SITES);
             var thisRoomsDamagedBuildings = Memory["rooms"][thisRoomName]["damagedBuildings"];
             if (thisRoomsDamagedBuildings[0]) {
                 var roomsDamagedBuildings = [];
@@ -116,7 +115,32 @@ module.exports = {
                 }
                 return 1;
             }
-            else if (targets.length) {
+            else {
+                return 2;
+            }
+        }
+        else {
+            return 0;
+        }
+    },
+    
+    buildUtil: function(targetCreep) {
+        var thisRoom = targetCreep.room;
+        var thisRoomName = thisRoom.name;
+        
+        if (!targetCreep.memory["fullStore"]) {
+            targetCreep.memory["fullStore"] = false;
+        }
+        
+        if (targetCreep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
+            targetCreep.memory["fullStore"] = false;
+        }
+        if (targetCreep.store.getFreeCapacity(RESOURCE_ENERGY) == 0) {
+            targetCreep.memory["fullStore"] = true;
+        }
+        if (targetCreep.memory["fullStore"]) {
+            var targets = thisRoom.find(FIND_CONSTRUCTION_SITES);
+            if (targets.length) {
                 var closestBuild = targetCreep.pos.findClosestByRange(targets);
                 var buildResult = targetCreep.build(closestBuild);
                 if (buildResult == ERR_NOT_IN_RANGE) {
@@ -146,6 +170,9 @@ module.exports = {
                 var upgradeResult = targetCreep.upgradeController(targetCreep.room.controller);
                 if (upgradeResult == ERR_NOT_IN_RANGE) {
                     targetCreep.moveTo(roomController);
+                    return 1;
+                } else if (upgradeResult == ERR_NOT_OWNER) {
+                    return 2;
                 }
                 return 1;
             }
@@ -159,6 +186,9 @@ module.exports = {
     },
     
     controllerUpgradeUtil: function(targetCreep) {
+        if (!targetCreep.room.controller.my) {
+            return 0;
+        }
         if (targetCreep.store.getUsedCapacity(RESOURCE_ENERGY) == 0) {
             targetCreep.memory["fullStore"] = false;
         }
@@ -169,6 +199,9 @@ module.exports = {
             var upgradeResult = targetCreep.upgradeController(targetCreep.room.controller);
             if (upgradeResult == ERR_NOT_IN_RANGE) {
                 targetCreep.moveTo(targetCreep.room.controller);
+            } 
+            else if (upgradeResult == ERR_NOT_OWNER) {
+                return 0;
             }
             return 1;
         }
@@ -179,7 +212,7 @@ module.exports = {
     
     workerRenewUtil: function(targetCreep) {
         var thisRoom = targetCreep.room;
-        var currentRoomName = targetCreep.room.name;
+        var currentRoomName = thisRoom.name;
         
         if (!targetCreep.memory["imDying"]) {
             targetCreep.memory["imDying"] = false;
@@ -188,7 +221,7 @@ module.exports = {
         if (targetCreep.ticksToLive < 250) {
             targetCreep.memory["imDying"] = true;
         }
-        if (targetCreep.ticksToLive > 1475) {
+        if (targetCreep.ticksToLive > 1450) {
             targetCreep.memory["imDying"] = false;
         }
         
@@ -197,14 +230,25 @@ module.exports = {
         
         if (targetCreep.memory["imDying"] == 1) {
             if (closestSpawn) {
-                if (closestSpawn.energy > 50) {
+                var renewalEnergy = 0;
+                for (index in thisRoomsSpawns) {
+                    renewalEnergy += thisRoomsSpawns[index].energy;
+                }
+                
+                var extensions = thisRoom.find(FIND_MY_STRUCTURES, {filter: {structureType: STRUCTURE_EXTENSION}});
+                for (index in extensions) {
+                    renewalEnergy += extensions[index].energy;
+                }
+                
+                if (renewalEnergy > 50) {
                     let renewResult = closestSpawn.renewCreep(targetCreep);
                     if (renewResult == ERR_NOT_IN_RANGE) {
-                        targetCreep.moveTo(closestSpawn);                    }
+                        targetCreep.moveTo(closestSpawn);
+                        }
                     return 1;
                 }
                 else if (targetCreep.store.getUsedCapacity(RESOURCE_ENERGY) > targetCreep.store.getFreeCapacity(RESOURCE_ENERGY)) {
-                    if (utils.storeEnergy(targetCreep, storeAny=false, storeExtension=false, storeLink=false, storeStorage=false, storeTower=false, storeTerminal=false, storeContainer=false, storeSpawn=true, requireSpace=true)) {
+                    if (utils.storeEnergy(targetCreep, storeAny=false, storeExtension=true, storeLink=false, storeStorage=false, storeTower=false, storeTerminal=false, storeContainer=false, storeSpawn=true, requireSpace=true)) {
                         return 1;
                     }
                 }
@@ -222,11 +266,43 @@ module.exports = {
                         if (tmp[0]) {
                             targetCreep.drop(RESOURCE_ENERGY);
                             targetCreep.moveTo(new RoomPosition(25, 25, roomNeighbors[index]));
-                            return1;
+                            return 1;
                         }
                     }
                 }
             }
+        }
+        return 0;
+    },
+    
+    scavengeUtil: function (targetCreep) {
+        droppedResources = targetCreep.room.find(FIND_DROPPED_RESOURCES, {filter: {resourceType: RESOURCE_ENERGY}});
+        closestResource = targetCreep.pos.findClosestByPath(droppedResources);
+        if (closestResource && targetCreep.store.getFreeCapacity(RESOURCE_ENERGY) > 0) {
+            pickupResult = targetCreep.pickup(closestResource);
+            if (pickupResult == ERR_NOT_IN_RANGE) {
+                targetCreep.moveTo(closestResource);
+            }
+            return 1;
+        }
+        return 0;
+    },
+    
+    salvageUtil: function(targetCreep) {
+        let ruins = targetCreep.room.find(FIND_RUINS);
+        if (!ruins) {
+            return 0;
+        }
+        
+        let closestRuin = targetCreep.pos.findClosestByPath(ruins);
+        
+        let salvageResult = targetCreep.dismantle(closestRuin);
+        if (salvageResult == ERR_NOT_IN_RANGE) {
+            targetCreep.moveTo(closestRuin);
+            return 1;
+        }
+        else if (!salvageResult) {
+            return 1;
         }
         return 0;
     }

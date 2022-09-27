@@ -9,7 +9,7 @@
 
 module.exports = {
     run: function(targetTower) {
-        if (targetTower.room.find(FIND_HOSTILE_CREEPS) && targetTower.attack(targetTower.pos.findClosestByRange(targetTower.room.find(FIND_HOSTILE_CREEPS))) != ERR_NOT_IN_RANGE) {
+        if (targetTower.room.find(FIND_HOSTILE_CREEPS).length && (targetTower.attack(targetTower.pos.findClosestByRange(targetTower.room.find(FIND_HOSTILE_CREEPS))) != ERR_NOT_IN_RANGE)) {
             return 0;
         }
         
@@ -22,14 +22,14 @@ module.exports = {
             }
         }
         
-        if (myInjuredCreeps.length && targetTower.heal(targetTower.pos.findClosestByRange(myInjuredCreeps)) != ERR_NOT_IN_RANGE) {
+        if (myInjuredCreeps.length && (targetTower.heal(targetTower.pos.findClosestByRange(myInjuredCreeps)) != ERR_NOT_IN_RANGE)) {
             return 0;
         }
         else {
             var buildingSites = targetTower.room.find(FIND_CONSTRUCTION_SITES);
             if (buildingSites.length) {
-                var closestBuild = targetTower.pos.findClosestByRange(targets);
-                var buildResult = targetTower.build(closestBuild);
+                var closestBuild = targetTower.pos.findClosestByRange(buildingSites);
+                var buildResult = targetTower.repair(closestBuild);
                 if (buildResult == ERR_NOT_IN_RANGE) {
                     return 1;
                 }
