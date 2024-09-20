@@ -1,2 +1,2 @@
-# screeps_code
-Code for the game screeps.
+# Screeps Scripts
+Scripts for the programming MMO [Screeps](https://screeps.com/).
